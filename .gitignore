@@ -1,0 +1,13 @@
+node_modules/
+out/
+dist/
+build/
+.remotion/
+remotion-tmp/
+*.log
+.DS_Store
+.env
+.env.local
+# Keep our rendered test output out of git (CI produces MP4s as artifacts)
+*.mp4
+!references/**/*.mp4
