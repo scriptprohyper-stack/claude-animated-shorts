@@ -1,0 +1,96 @@
+{
+  "vo": {
+    "s1_narr": {
+      "start": 0.3,
+      "duration": 4.5849433106575965,
+      "text": "Willkommen zur Weltfriedenskonferenz zwanzighundertsechsundzwanzig!"
+    },
+    "s1_pol1": {
+      "start": 2.6,
+      "duration": 2.8676190476190477,
+      "text": "Wer gewinnt eigentlich den naechsten Weltkrieg?"
+    },
+    "s2_haupt": {
+      "start": 6.1,
+      "duration": 2.5676643990929704,
+      "text": "Koennten wir mehr Geld fuer Schulen bekommen?"
+    },
+    "s2_polno": {
+      "start": 8.5,
+      "duration": 1.3774603174603175,
+      "text": "KEIN BUDGET!"
+    },
+    "s2_polyay": {
+      "start": 10.8,
+      "duration": 1.868843537414966,
+      "text": "Oh! Ist der neu?!"
+    },
+    "s3_a1": {
+      "start": 12.2,
+      "duration": 1.251156462585034,
+      "text": "Wir wollen Frieden!"
+    },
+    "s3_b1": {
+      "start": 13.55,
+      "duration": 0.8115646258503402,
+      "text": "Wir auch!"
+    },
+    "s3_a2": {
+      "start": 14.6,
+      "duration": 2.099183673469388,
+      "text": "Deshalb brauchen wir mehr Waffen!"
+    },
+    "s3_b2": {
+      "start": 17.1,
+      "duration": 0.8115646258503402,
+      "text": "Wir auch!"
+    },
+    "s4_narr": {
+      "start": 19.2,
+      "duration": 4.184489795918368,
+      "text": "Fuer Waffen ist Geld da. Fuer alles andere wird's schwierig."
+    },
+    "s4_sell": {
+      "start": 22.8,
+      "duration": 1.271111111111111,
+      "text": "Ich liebe Frieden!"
+    },
+    "s5_erde": {
+      "start": 25.2,
+      "duration": 2.1517913832199547,
+      "text": "Kann mich bitte jemand deinstallieren?"
+    },
+    "s5_text": {
+      "start": 27.8,
+      "duration": 4.56312925170068,
+      "text": "Menschheit zweitausendsechsundzwanzig. Update fehlgeschlagen."
+    }
+  },
+  "sfx": {
+    "sfx_zoom": {
+      "start": 5.6,
+      "duration": 0.5
+    },
+    "sfx_tankwh": {
+      "start": 9.6,
+      "duration": 1.1
+    },
+    "sfx_tankboom": {
+      "start": 10.3,
+      "duration": 0.6
+    },
+    "sfx_jubel": {
+      "start": 18.1,
+      "duration": 0.9
+    },
+    "sfx_cash": {
+      "start": 23.3,
+      "duration": 0.4
+    },
+    "sfx_err": {
+      "start": 28.7,
+      "duration": 1.2
+    }
+  },
+  "total": 30.0
+}

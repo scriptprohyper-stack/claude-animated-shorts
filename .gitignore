@@ -11,3 +11,6 @@ remotion-tmp/
 # Keep our rendered test output out of git (CI produces MP4s as artifacts)
 *.mp4
 !references/**/*.mp4
+# Per-line espeak stems live only locally; the final mix.wav is committed
+# so a fresh clone can render out of the box.
+public/audio/stems/
