@@ -1,0 +1,111 @@
+name: Render Short
+
+on:
+  workflow_dispatch:
+    inputs:
+      composition:
+        description: "Composition ID to render (see src/Root.tsx)"
+        required: true
+        default: "CartoonTest"
+        type: string
+      scale:
+        description: "Render scale (1 = 1080x1920, 1.3333 = ~1440x2560 2K)"
+        required: true
+        default: "1"
+        type: string
+      crf:
+        description: "x264 CRF (lower = higher quality; 16 for final, 23 for preview)"
+        required: true
+        default: "18"
+        type: string
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "package.json"
+      - "package-lock.json"
+      - "remotion.config.ts"
+      - ".github/workflows/render.yml"
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Set up Python 3
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Install Chromium system dependencies
+        run: |
+          sudo apt-get install -y \
+            libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
+            libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 \
+            libxrandr2 libgbm1 libasound2t64 libpango-1.0-0 \
+            libcairo2 libatspi2.0-0 || \
+          sudo apt-get install -y \
+            libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
+            libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 \
+            libxrandr2 libgbm1 libasound2 libpango-1.0-0 \
+            libcairo2 libatspi2.0-0
+
+      - name: Install npm dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Type-check
+        run: npx tsc --noEmit
+
+      - name: Render composition
+        env:
+          COMP: ${{ github.event.inputs.composition || 'CartoonTest' }}
+          SCALE: ${{ github.event.inputs.scale || '1' }}
+          CRF: ${{ github.event.inputs.crf || '18' }}
+        run: |
+          mkdir -p out
+          npx remotion render src/index.ts "$COMP" "out/$COMP.mp4" \
+            --codec h264 \
+            --crf "$CRF" \
+            --scale "$SCALE" \
+            --concurrency 1 \
+            --log=info
+
+      - name: Verify MP4 metadata
+        env:
+          COMP: ${{ github.event.inputs.composition || 'CartoonTest' }}
+        run: |
+          ls -lh "out/$COMP.mp4"
+          ffprobe -v error -show_entries \
+            stream=codec_name,width,height,r_frame_rate,duration \
+            -of default=noprint_wrappers=1 "out/$COMP.mp4"
+
+      - name: Extract preview frame
+        env:
+          COMP: ${{ github.event.inputs.composition || 'CartoonTest' }}
+        run: |
+          ffmpeg -y -i "out/$COMP.mp4" -vf "select=eq(n\,15)" \
+            -frames:v 1 "out/$COMP-preview.jpg"
+
+      - name: Upload MP4 and preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: short-${{ github.event.inputs.composition || 'CartoonTest' }}-${{ github.run_number }}
+          path: |
+            out/*.mp4
+            out/*.jpg
+          retention-days: 30
+          if-no-files-found: error
