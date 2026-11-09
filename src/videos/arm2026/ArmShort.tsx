@@ -18,8 +18,8 @@ import {
 } from "remotion";
 import { MadLab } from "../../shared/scifi/Environments";
 import { Character, Expression, Pose } from "../../shared/scifi/Character";
-import { T, INK_W, INK_W_FINE } from "../../shared/scifi/tokens";
-import { SUBS, BADGES, FPS, WIDTH, HEIGHT } from "./cues";
+import { T, INK_W } from "../../shared/scifi/tokens";
+import { BADGES, FPS, WIDTH, HEIGHT } from "./cues";
 
 const ease = Easing.bezier(0.42, 0, 0.58, 1);
 const smootherstep = (t: number): number => {
@@ -27,19 +27,6 @@ const smootherstep = (t: number): number => {
   return c * c * c * (c * (c * 6 - 15) + 10);
 };
 
-function activeSub(sec: number) {
-  const list = SUBS.filter((s) => sec >= s.start && sec < s.end);
-  if (list.length === 0) return null;
-  return list.reduce((a, b) => (a.start > b.start ? a : b));
-}
-
-function isLineTalking(id: string, frame: number): boolean {
-  const c = SUBS.find((s) => s.id === id);
-  if (!c) return false;
-  const sec = frame / FPS;
-  if (sec < c.start || sec > c.end - 0.15) return false;
-  return Math.floor(frame / 3) % 2 === 0;
-}
 
 // --- Hologramm-Tablet ---------------------------------------------------
 // Schwebendes rundes-ecktes UI-Panel vor Dr. L. zeigt die Bank-App.
@@ -108,7 +95,7 @@ const Tablet: React.FC<{
 // Bank-App Screen Content
 const AppScreen: React.FC<{ time: number; sec: number }> = ({ time, sec }) => {
   // Confetti spawn: ersten Hook (0 - 2 s) + jedes Badge
-  const confettiFrame = sec < 2.5 || (sec >= 9 && sec < 9.5) || (sec >= 11.3 && sec < 11.8) || (sec >= 13.7 && sec < 14.2);
+  const confettiFrame = sec < 2.5 || (sec >= 9.6 && sec < 10.1) || (sec >= 12.2 && sec < 12.7) || (sec >= 14.9 && sec < 15.4);
   return (
     <g>
       {/* Header "ARM-PROGRAMM" */}
@@ -126,11 +113,11 @@ const AppScreen: React.FC<{ time: number; sec: number }> = ({ time, sec }) => {
 
       {/* Main content changes by beat */}
       {sec < 3.0 && <HookScreenContent time={time} />}
-      {sec >= 3.0 && sec < 8.9 && <ProgramIntroContent time={time} />}
-      {sec >= 8.9 && sec < 18.6 && <BadgesContent sec={sec} time={time} />}
-      {sec >= 18.6 && sec < 23.0 && <PointsBarContent time={time} sec={sec} />}
-      {sec >= 23.0 && sec < 28.4 && <PremiumContent time={time} sec={sec} />}
-      {sec >= 28.4 && <EmptyAfterRealization />}
+      {sec >= 3.0 && sec < 9.6 && <ProgramIntroContent time={time} />}
+      {sec >= 9.6 && sec < 19.8 && <BadgesContent sec={sec} time={time} />}
+      {sec >= 19.8 && sec < 24.0 && <PointsBarContent time={time} sec={sec} />}
+      {sec >= 24.0 && sec < 28.6 && <PremiumContent time={time} sec={sec} />}
+      {sec >= 28.6 && <EmptyAfterRealization />}
 
       {/* Confetti overlay */}
       {confettiFrame && <ConfettiBurst time={time} />}
@@ -294,7 +281,7 @@ const PointsBarContent: React.FC<{ time: number; sec: number }> = ({ sec }) => {
 const PremiumContent: React.FC<{ time: number; sec: number }> = ({ sec, time }) => {
   const pulse = 1 + Math.sin(time * 6) * 0.04;
   // Nach bot7 (ab 24.6) zeigen wir die Pointe
-  const revealed = sec >= 25.3;
+  const revealed = sec >= 26.3;
   return (
     <g>
       {!revealed ? (
@@ -345,32 +332,29 @@ const EmptyAfterRealization: React.FC = () => (
 
 // --- Character state machine -------------------------------------------
 
-function pickCharacterState(sec: number, frame: number): { expression: Expression; pose: Pose } {
-  // Hook: neutral, then sarcastic side-eye
+function pickCharacterState(sec: number, _frame: number): { expression: Expression; pose: Pose } {
+  // Hook: neutral, then sarcastic side-eye nach "Du bist offiziell arm!"
   if (sec < 2.6) return { expression: "neutral", pose: "idle" };
   if (sec < 3.3) return { expression: "sarcastic", pose: "side_eye" };
 
-  // Bot intro
-  if (sec < 6.1) return { expression: "confused", pose: isLineTalking("bot1", frame) ? "idle" : "idle" };
+  // Bot-Intro
+  if (sec < 6.7) return { expression: "confused", pose: "idle" };
+  if (sec < 9.5) return { expression: "angry", pose: "idle" };
 
-  // Jedes Mal was passiert: progressively more done
-  if (sec < 9.0) return { expression: "angry", pose: "idle" };
+  // Badges: zunehmende Toten-Blick-Energie
+  if (sec < 12.1) return { expression: "sarcastic", pose: "side_eye" };
+  if (sec < 14.8) return { expression: "angry", pose: "idle" };
+  if (sec < 19.8) return { expression: "shocked", pose: "shocked_recoil" };
 
-  // Badges: increasing deadness
-  if (sec < 11.3) return { expression: "sarcastic", pose: "side_eye" };
-  if (sec < 13.7) return { expression: "sad", pose: "idle" } as any; // sad maps to sarcastic fallback
-  if (sec < 18.6) return { expression: "shocked", pose: "shocked_recoil" };
+  // "Und was krieg ich dafuer?"
+  if (sec < 21.6) return { expression: "neutral", pose: "presenting" };
 
-  // Points bar + "und was krieg ich?"
-  if (sec < 20.6) return { expression: "neutral", pose: "presenting" };
-  if (sec < 23.0) return { expression: "confused", pose: "idle" };
+  // Premium-Teaser
+  if (sec < 24.9) return { expression: "confused", pose: "idle" };
 
-  // "Was ist Premium?"
-  if (sec < 24.6) return { expression: "confused", pose: "idle" };
-
-  // "Premium = 2019" reveal
-  if (sec < 25.5) return { expression: "neutral", pose: "idle" };
-  if (sec < 28.4) return { expression: "shocked", pose: "shocked_recoil" };
+  // "Was ist Premium?" + Pointe 2019
+  if (sec < 26.3) return { expression: "confused", pose: "idle" };
+  if (sec < 28.6) return { expression: "shocked", pose: "shocked_recoil" };
 
   // Button
   return { expression: "sarcastic", pose: "side_eye" };
@@ -382,70 +366,11 @@ function normalizeExpression(e: any): Expression {
   return valid.includes(e) ? e : "sarcastic";
 }
 
-// --- Subtitle mit Auto-Wrap --------------------------------------------
-
-function wrapText(text: string, maxCharsPerLine: number): string[] {
-  const words = text.split(" ");
-  const lines: string[] = [];
-  let cur = "";
-  for (const w of words) {
-    if ((cur + " " + w).trim().length > maxCharsPerLine) {
-      if (cur) lines.push(cur);
-      cur = w;
-    } else {
-      cur = (cur + " " + w).trim();
-    }
-  }
-  if (cur) lines.push(cur);
-  return lines;
-}
-
-const SubtitlePanel: React.FC<{ sub: { speaker: string; text: string } }> = ({ sub }) => {
-  const lines = wrapText(sub.text, 42);
-  const fontSize = lines.length > 1 ? 28 : 32;
-  const panelH = 70 + lines.length * (fontSize + 6);
-  return (
-    <g transform={`translate(${WIDTH / 2} ${HEIGHT * 0.93})`}>
-      <rect
-        x={-WIDTH * 0.47}
-        y={-(panelH / 2) - 6}
-        width={WIDTH * 0.94}
-        height={panelH}
-        fill="rgba(0,0,0,0.78)"
-        rx={16}
-      />
-      <text
-        textAnchor="middle"
-        y={-(panelH / 2) + 28}
-        fontFamily="Arial, sans-serif"
-        fontSize={22}
-        fill={T.accentYellow}
-        fontWeight="bold"
-      >
-        {sub.speaker}
-      </text>
-      {lines.map((line, i) => (
-        <text
-          key={i}
-          textAnchor="middle"
-          y={-(panelH / 2) + 60 + i * (fontSize + 4)}
-          fontFamily="Arial, sans-serif"
-          fontSize={fontSize}
-          fill="#fff"
-          fontWeight="bold"
-        >
-          {line}
-        </text>
-      ))}
-    </g>
-  );
-};
-
 // --- Final-Overlay ------------------------------------------------------
 
 const AchievementOverlay: React.FC<{ sec: number }> = ({ sec }) => {
-  if (sec < 28.4) return null;
-  const age = sec - 28.4;
+  if (sec < 28.6) return null;
+  const age = sec - 28.6;
   const slide = smootherstep(Math.min(1, age / 0.25));
   const flicker = Math.floor(age * 20) % 2 === 0 ? 1 : 0.7;
   return (
@@ -482,7 +407,7 @@ export const ArmShort: React.FC = () => {
   });
   // Punch on each badge + final reveal
   const punch = ((): number => {
-    const beats = [8.9, 11.2, 13.6, 25.3, 28.4];
+    const beats = [9.6, 12.2, 14.9, 26.3, 28.6];
     for (const b of beats) {
       if (t >= b && t < b + 0.35) {
         const u = (t - b) / 0.35;
@@ -510,8 +435,6 @@ export const ArmShort: React.FC = () => {
   // Micro-bob
   const bob = Math.sin(t * 2.5) * 3;
 
-  const sub = activeSub(t);
-
   return (
     <AbsoluteFill style={{ backgroundColor: T.bgDeep }}>
       <Audio src={staticFile("audio/arm.wav")} />
@@ -535,7 +458,7 @@ export const ArmShort: React.FC = () => {
             screen={<AppScreen time={t} sec={t} />}
             glow={
               t < 3.0 ? T.accentGreen
-              : t >= 25.3 && t < 28.4 ? T.accentPink
+              : t >= 26.3 && t < 28.6 ? T.accentPink
               : T.accentCyan
             }
           />
@@ -553,8 +476,7 @@ export const ArmShort: React.FC = () => {
           />
         </g>
 
-        {/* Subtitles — zwei Zeilen bei langem Text */}
-        {sub && t < 28.4 && <SubtitlePanel sub={sub} />}
+        {/* Keine Untertitel — User-Request. */}
 
         {/* Final achievement unlock overlay */}
         <AchievementOverlay sec={t} />

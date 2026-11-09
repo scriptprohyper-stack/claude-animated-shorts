@@ -1,7 +1,14 @@
 #!/usr/bin/env python3
 """
 Audio-Mix fuer „Herzlichen Glueckwunsch! Du bist arm." (30 s).
-espeak-ng VO + synthetische SFX. Keine externen Dienste.
+
+VO via Piper TTS (neuronales lokales TTS, Rhasspy).
+- Thorsten (high quality 22 kHz) fuer Dr. L. — maennlich, tief, deadpan.
+- Kerstin (16 kHz) fuer den Bank-Bot und den Konfetti-Narrator —
+  weiblich, naturnah, mit length_scale<1 fuer die perky Corporate-Energie.
+
+SFX weiterhin synthetisch in-code.
+Mix via ffmpeg auf 48 kHz Stereo, exakt 30.00 s.
 """
 import json
 import math
@@ -18,36 +25,69 @@ STEMS.mkdir(parents=True, exist_ok=True)
 SR = 48000
 TOTAL = 30.0
 
+PIPER_VOICE_DIR = Path("/root/piper-voices")
+THORSTEN = PIPER_VOICE_DIR / "de_DE-thorsten-high.onnx"
+KERSTIN = PIPER_VOICE_DIR / "de_DE-kerstin-low.onnx"
 
 # --- VO ------------------------------------------------------------------
-# ASCII fuer espeak, Umlaute werden in der Composition in Untertitel ersetzt.
+# length_scale: <1 = schneller/perky, >1 = langsamer/deadpan
+# noise_w_scale: >1 = mehr Prosodie-Varianz (lebendiger)
 
 VO = [
-    # (id, start, voice, pitch, wpm, text)
-    ("hook",   0.20, "de+f4", 72, 195, "Herzlichen Glueckwunsch! Du bist offiziell arm!"),
-    ("bot1",   3.50, "de+f2", 70, 195, "Willkommen im Arm-Programm. Armut ist jetzt spannend!"),
-    ("bot2",   6.20, "de+f2", 70, 195, "Was Sie sich nicht leisten koennen, bringt Punkte!"),
-    ("bot3",   9.00, "de+f2", 72, 200, "Butter nicht gekauft? Plus fuenfzig!"),
-    ("bot4",  11.30, "de+f2", 72, 200, "Heizung aus im Winter? Plus zweihundert!"),
-    ("bot5",  13.70, "de+f2", 72, 200, "Freunde abgesagt, weil Bier zu teuer? Plus fuenfhundert — und ein Wellness-Sticker!"),
-    ("drl2",  19.20, "de+m1", 48, 160, "Und was krieg ich dafuer?"),
-    ("bot6",  20.80, "de+f2", 70, 195, "Mit genug Punkten erreichen Sie den Premium-Status!"),
-    ("drl3",  23.40, "de+m1", 48, 160, "Was ist Premium?"),
-    ("bot7",  24.60, "de+f2", 60, 175, "Premium ist das Leben, das Sie zweitausendneunzehn hatten."),
+    # (id, start, model, length_scale, noise_w, text)
+    ("hook",  0.20, KERSTIN,  0.85, 0.9,
+     "Herzlichen Glueckwunsch! Du bist offiziell arm!"),
+
+    ("bot1",  3.50, KERSTIN,  0.78, 0.9,
+     "Willkommen im Arm-Programm. Armut ist jetzt spannend!"),
+
+    ("bot2",  6.80, KERSTIN,  0.80, 0.9,
+     "Was Sie sich nicht leisten koennen, bringt Punkte!"),
+
+    ("bot3",  9.70, KERSTIN,  0.72, 0.9,
+     "Butter nicht gekauft? Plus fuenfzig!"),
+
+    ("bot4", 12.30, KERSTIN,  0.72, 0.9,
+     "Heizung aus im Winter? Plus zweihundert!"),
+
+    ("bot5", 15.00, KERSTIN,  0.80, 0.9,
+     "Freunde abgesagt, weil Bier zu teuer? Plus fuenfhundert — und ein Wellness-Sticker!"),
+
+    ("drl2", 20.20, THORSTEN, 1.0, 0.7,
+     "Und was krieg ich dafuer?"),
+
+    ("bot6", 21.90, KERSTIN,  0.78, 0.9,
+     "Mit genug Punkten erreichen Sie den Premium-Status!"),
+
+    ("drl3", 24.90, THORSTEN, 1.05, 0.7,
+     "Was ist Premium?"),
+
+    ("bot7", 26.20, KERSTIN,  0.85, 0.95,
+     "Premium ist Ihr Leben von zweitausendneunzehn."),
 ]
 
 
 def synth_vo():
     out = {}
-    for cid, start, voice, pitch, wpm, text in VO:
+    for cid, start, model, length_scale, noise_w, text in VO:
         p = STEMS / f"vo_{cid}.wav"
-        subprocess.run([
-            "espeak-ng", "-v", voice, "-p", str(pitch), "-s", str(wpm),
-            "-a", "185", "-w", str(p), text,
-        ], check=True)
+        cmd = [
+            "python3", "-m", "piper",
+            "-m", str(model),
+            "-f", str(p),
+            "--length-scale", str(length_scale),
+            "--noise-w-scale", str(noise_w),
+            "--sentence-silence", "0.1",
+        ]
+        r = subprocess.run(cmd, input=text, text=True,
+                           capture_output=True)
+        if r.returncode != 0:
+            print(r.stderr[-500:])
+            raise RuntimeError(f"piper failed for {cid}")
         d = wav_duration(p)
         out[cid] = {"start": start, "duration": d, "text": text}
-        print(f"  VO {cid:6s}  start={start:5.2f}  dur={d:4.2f}")
+        voice_name = "Thorsten" if model == THORSTEN else "Kerstin"
+        print(f"  VO {cid:6s}  {voice_name:8s}  start={start:5.2f}  dur={d:4.2f}")
     return out
 
 
@@ -72,7 +112,6 @@ def _write(path: Path, samples, sr=SR):
 
 
 def chime(dur=0.45):
-    """Freundlicher Notifications-Ping, 2 Toene aufsteigend."""
     n = int(dur * SR)
     out = []
     for i in range(n):
@@ -85,7 +124,6 @@ def chime(dur=0.45):
 
 
 def confetti(dur=0.8):
-    """Konfetti-Burst: viele kleine zufaellige Partikel-Pings."""
     import random
     random.seed(42)
     n = int(dur * SR)
@@ -105,11 +143,10 @@ def confetti(dur=0.8):
     return out
 
 
-def badge_ding(dur=0.5, up=True):
-    """Achievement-Ton: 3 Dreiklang-Noten in 0.5 s."""
+def badge_ding(dur=0.5):
     n = int(dur * SR)
     out = []
-    notes = [523, 659, 784] if up else [784, 659, 523]  # C, E, G
+    notes = [523, 659, 784]
     step = dur / 3
     for i in range(n):
         t = i / SR
@@ -122,20 +159,19 @@ def badge_ding(dur=0.5, up=True):
 
 
 def fail_tone(dur=1.1):
-    """Windows-aehnlicher Fehlerton."""
     n = int(dur * SR)
     out = []
     for i in range(n):
         t = i / SR
         if t < 0.35:
             f = 740
-            env = math.sin(math.pi * (t / 0.35)) if t < 0.35 else 0
+            env = math.sin(math.pi * (t / 0.35))
         elif t < 0.45:
             env, f = 0, 740
         elif t < 0.95:
             lt = t - 0.45
             f = 494
-            env = math.sin(math.pi * (lt / 0.5)) if lt < 0.5 else 0
+            env = math.sin(math.pi * (lt / 0.5))
         else:
             env, f = 0, 494
         s = math.sin(2 * math.pi * f * t) * 0.55 + math.sin(2 * math.pi * f * 1.5 * t) * 0.22
@@ -143,19 +179,7 @@ def fail_tone(dur=1.1):
     return out
 
 
-def typing_beep(dur=0.08):
-    """Kurzer UI-Beep."""
-    n = int(dur * SR)
-    out = []
-    for i in range(n):
-        t = i / SR
-        env = math.exp(-t * 60)
-        out.append(math.sin(2 * math.pi * 1800 * t) * env * 0.3)
-    return out
-
-
 def ambient(dur=TOTAL):
-    """Leises Pad fuer Grundton."""
     n = int(dur * SR)
     out = []
     for i in range(n):
@@ -168,14 +192,13 @@ def ambient(dur=TOTAL):
 
 
 SFX = [
-    # (id, start, builder, kwargs, gain_db)
     ("chime_hook",  0.00, chime,       {"dur": 0.5}, -2),
     ("confetti",    0.25, confetti,    {"dur": 0.7}, -4),
-    ("badge1",      8.90, badge_ding,  {"dur": 0.5}, -3),
-    ("badge2",     11.20, badge_ding,  {"dur": 0.5}, -3),
-    ("badge3",     13.60, badge_ding,  {"dur": 0.5}, -3),
-    ("chime_prem", 20.70, chime,       {"dur": 0.4}, -6),
-    ("fail",       28.50, fail_tone,   {"dur": 1.3}, -1),
+    ("badge1",      9.60, badge_ding,  {"dur": 0.5}, -3),
+    ("badge2",     12.20, badge_ding,  {"dur": 0.5}, -3),
+    ("badge3",     14.90, badge_ding,  {"dur": 0.5}, -3),
+    ("chime_prem", 21.80, chime,       {"dur": 0.4}, -6),
+    ("fail",       28.60, fail_tone,   {"dur": 1.3}, -1),
 ]
 
 
@@ -235,7 +258,7 @@ def mix(vo, sfx):
 
 
 def main():
-    print("[1/3] VO (espeak-ng, de)...")
+    print("[1/3] VO (Piper, Thorsten + Kerstin, de)...")
     vo = synth_vo()
     print("[2/3] SFX...")
     sfx = build_sfx()
