@@ -3,6 +3,7 @@ import { Composition } from "remotion";
 import { CartoonTest } from "./CartoonTest";
 import { FriedenShort } from "./videos/frieden2026/Frieden";
 import { TOTAL_FRAMES, FPS, WIDTH, HEIGHT } from "./videos/frieden2026/cues";
+import { ScifiTestClip } from "./videos/scifi/TestClip";
 
 export const Root: React.FC = () => {
   return (
@@ -22,6 +23,14 @@ export const Root: React.FC = () => {
         fps={FPS}
         width={WIDTH}
         height={HEIGHT}
+      />
+      <Composition
+        id="ScifiTestClip"
+        component={ScifiTestClip}
+        durationInFrames={300}
+        fps={30}
+        width={1080}
+        height={1920}
       />
     </>
   );
