@@ -14,3 +14,4 @@ remotion-tmp/
 # Per-line espeak stems live only locally; the final mix.wav is committed
 # so a fresh clone can render out of the box.
 public/audio/stems/
+public/audio/stems_arm/

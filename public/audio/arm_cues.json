@@ -1,0 +1,92 @@
+{
+  "vo": {
+    "hook": {
+      "start": 0.2,
+      "duration": 2.777596371882086,
+      "text": "Herzlichen Glueckwunsch! Du bist offiziell arm!"
+    },
+    "bot1": {
+      "start": 3.5,
+      "duration": 2.9237641723356007,
+      "text": "Willkommen im Arm-Programm. Armut ist jetzt spannend!"
+    },
+    "bot2": {
+      "start": 6.2,
+      "duration": 2.5430385487528344,
+      "text": "Was Sie sich nicht leisten koennen, bringt Punkte!"
+    },
+    "bot3": {
+      "start": 9.0,
+      "duration": 2.273832199546485,
+      "text": "Butter nicht gekauft? Plus fuenfzig!"
+    },
+    "bot4": {
+      "start": 11.3,
+      "duration": 2.5030385487528344,
+      "text": "Heizung aus im Winter? Plus zweihundert!"
+    },
+    "bot5": {
+      "start": 13.7,
+      "duration": 4.67891156462585,
+      "text": "Freunde abgesagt, weil Bier zu teuer? Plus fuenfhundert \u2014 und ein Wellness-Sticker!"
+    },
+    "drl2": {
+      "start": 19.2,
+      "duration": 1.7854421768707482,
+      "text": "Und was krieg ich dafuer?"
+    },
+    "bot6": {
+      "start": 20.8,
+      "duration": 2.7458049886621314,
+      "text": "Mit genug Punkten erreichen Sie den Premium-Status!"
+    },
+    "drl3": {
+      "start": 23.4,
+      "duration": 1.4245351473922903,
+      "text": "Was ist Premium?"
+    },
+    "bot7": {
+      "start": 24.6,
+      "duration": 3.395328798185941,
+      "text": "Premium ist das Leben, das Sie zweitausendneunzehn hatten."
+    }
+  },
+  "sfx": {
+    "chime_hook": {
+      "start": 0.0,
+      "duration": 0.5,
+      "gain_db": -2
+    },
+    "confetti": {
+      "start": 0.25,
+      "duration": 0.7,
+      "gain_db": -4
+    },
+    "badge1": {
+      "start": 8.9,
+      "duration": 0.5,
+      "gain_db": -3
+    },
+    "badge2": {
+      "start": 11.2,
+      "duration": 0.5,
+      "gain_db": -3
+    },
+    "badge3": {
+      "start": 13.6,
+      "duration": 0.5,
+      "gain_db": -3
+    },
+    "chime_prem": {
+      "start": 20.7,
+      "duration": 0.4,
+      "gain_db": -6
+    },
+    "fail": {
+      "start": 28.5,
+      "duration": 1.3,
+      "gain_db": -1
+    }
+  },
+  "total": 30.0
+}
