@@ -5,9 +5,13 @@ description: Make a 9:16 German-language Faceless YouTube Short in the minimalis
 
 # Sci-Fi Faceless Short — Haus-Stil
 
-**Lies ZUERST `STYLE_GUIDE.md` am Repo-Root.** Das ist der Kanon. Es
-beschreibt Figur, Palette, Posen, Expressions, Props, Environments,
-Kamera und Delivery. Alles hier ist nur Workflow.
+**Lies ZUERST zwei Dokumente am Repo-Root — beide sind Kanon:**
+- `STYLE_GUIDE.md` — wie es **aussieht** (Figur, Palette, Posen,
+  Expressions, Props, Environments, Kamera, Delivery).
+- `WRITING_BIBLE.md` — wie es **geschrieben** wird (Hook, Beat-Struktur,
+  Pointe, Satire-Engine, Dialog-Mechanik, Themen-Verbot).
+
+Alles hier ist nur Workflow.
 
 ## Pipeline
 
