@@ -2,52 +2,52 @@
   "vo": {
     "hook": {
       "start": 0.2,
-      "duration": 2.66,
-      "text": "Herzlichen Glueckwunsch! Du bist offiziell arm!"
+      "duration": 2.4573242630385486,
+      "text": "Herzlichen Glueckwunsch. Du bist offiziell arm."
     },
     "bot1": {
       "start": 3.5,
-      "duration": 2.948,
-      "text": "Willkommen im Arm-Programm. Armut ist jetzt spannend!"
+      "duration": 2.780408163265306,
+      "text": "Willkommen im Arm-Programm. Armut ist jetzt spannend."
     },
     "bot2": {
       "start": 6.8,
-      "duration": 2.576,
-      "text": "Was Sie sich nicht leisten koennen, bringt Punkte!"
+      "duration": 2.2639455782312927,
+      "text": "Was Sie sich nicht leisten koennen, bringt Punkte."
     },
     "bot3": {
       "start": 9.7,
-      "duration": 2.356,
-      "text": "Butter nicht gekauft? Plus fuenfzig!"
+      "duration": 2.185079365079365,
+      "text": "Butter nicht gekauft? Plus fuenfzig."
     },
     "bot4": {
       "start": 12.3,
-      "duration": 2.5,
-      "text": "Heizung aus im Winter? Plus zweihundert!"
+      "duration": 2.2816780045351472,
+      "text": "Heizung aus im Winter? Plus zweihundert."
     },
     "bot5": {
       "start": 15.0,
-      "duration": 4.82,
-      "text": "Freunde abgesagt, weil Bier zu teuer? Plus fuenfhundert \u2014 und ein Wellness-Sticker!"
+      "duration": 4.702585034013605,
+      "text": "Freunde abgesagt, weil Bier zu teuer? Plus fuenfhundert \u2014 und ein Wellness-Sticker."
     },
     "drl2": {
       "start": 20.2,
-      "duration": 1.3351473922902495,
+      "duration": 1.4628571428571429,
       "text": "Und was krieg ich dafuer?"
     },
     "bot6": {
       "start": 21.9,
-      "duration": 2.928,
-      "text": "Mit genug Punkten erreichen Sie den Premium-Status!"
+      "duration": 2.6672562358276646,
+      "text": "Mit genug Punkten erreichen Sie den Premium-Status."
     },
     "drl3": {
       "start": 24.9,
-      "duration": 0.9520181405895691,
+      "duration": 1.1377777777777778,
       "text": "Was ist Premium?"
     },
     "bot7": {
       "start": 26.2,
-      "duration": 3.184,
+      "duration": 2.7789115646258504,
       "text": "Premium ist Ihr Leben von zweitausendneunzehn."
     }
   },

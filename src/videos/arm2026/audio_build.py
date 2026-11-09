@@ -27,68 +27,101 @@ TOTAL = 30.0
 
 PIPER_VOICE_DIR = Path("/root/piper-voices")
 THORSTEN = PIPER_VOICE_DIR / "de_DE-thorsten-high.onnx"
-KERSTIN = PIPER_VOICE_DIR / "de_DE-kerstin-low.onnx"
 
 # --- VO ------------------------------------------------------------------
-# length_scale: <1 = schneller/perky, >1 = langsamer/deadpan
-# noise_w_scale: >1 = mehr Prosodie-Varianz (lebendiger)
+# Eine maennliche Stimme (Thorsten high quality) fuer alles.
+# Zwei "Charaktere" durch unterschiedliche Prosodie + Pitch-Shift:
+#   Dr. L.  : natuerliche Thorsten-Stimme, leicht verlangsamt (deadpan).
+#   Bank-Bot: Thorsten + Pitch-Shift +2.5 Halbtoene (via ffmpeg
+#             asetrate), schneller (perky Corporate), mehr Prosodie-
+#             Varianz (noise_w=1.0) damit es nicht roboterhaft wirkt.
 
+# character: "drl" | "bot"
 VO = [
-    # (id, start, model, length_scale, noise_w, text)
-    ("hook",  0.20, KERSTIN,  0.85, 0.9,
-     "Herzlichen Glueckwunsch! Du bist offiziell arm!"),
+    # (id, start, character, length_scale, noise_w, text)
+    ("hook",  0.20, "bot", 0.88, 1.0,
+     "Herzlichen Glueckwunsch. Du bist offiziell arm."),
 
-    ("bot1",  3.50, KERSTIN,  0.78, 0.9,
-     "Willkommen im Arm-Programm. Armut ist jetzt spannend!"),
+    ("bot1",  3.50, "bot", 0.88, 1.0,
+     "Willkommen im Arm-Programm. Armut ist jetzt spannend."),
 
-    ("bot2",  6.80, KERSTIN,  0.80, 0.9,
-     "Was Sie sich nicht leisten koennen, bringt Punkte!"),
+    ("bot2",  6.80, "bot", 0.90, 1.0,
+     "Was Sie sich nicht leisten koennen, bringt Punkte."),
 
-    ("bot3",  9.70, KERSTIN,  0.72, 0.9,
-     "Butter nicht gekauft? Plus fuenfzig!"),
+    ("bot3",  9.70, "bot", 0.85, 1.0,
+     "Butter nicht gekauft? Plus fuenfzig."),
 
-    ("bot4", 12.30, KERSTIN,  0.72, 0.9,
-     "Heizung aus im Winter? Plus zweihundert!"),
+    ("bot4", 12.30, "bot", 0.85, 1.0,
+     "Heizung aus im Winter? Plus zweihundert."),
 
-    ("bot5", 15.00, KERSTIN,  0.80, 0.9,
-     "Freunde abgesagt, weil Bier zu teuer? Plus fuenfhundert — und ein Wellness-Sticker!"),
+    ("bot5", 15.00, "bot", 0.88, 1.0,
+     "Freunde abgesagt, weil Bier zu teuer? Plus fuenfhundert — und ein Wellness-Sticker."),
 
-    ("drl2", 20.20, THORSTEN, 1.0, 0.7,
+    ("drl2", 20.20, "drl", 1.08, 0.75,
      "Und was krieg ich dafuer?"),
 
-    ("bot6", 21.90, KERSTIN,  0.78, 0.9,
-     "Mit genug Punkten erreichen Sie den Premium-Status!"),
+    ("bot6", 21.90, "bot", 0.88, 1.0,
+     "Mit genug Punkten erreichen Sie den Premium-Status."),
 
-    ("drl3", 24.90, THORSTEN, 1.05, 0.7,
+    ("drl3", 24.90, "drl", 1.10, 0.75,
      "Was ist Premium?"),
 
-    ("bot7", 26.20, KERSTIN,  0.85, 0.95,
+    ("bot7", 26.20, "bot", 0.95, 1.05,
      "Premium ist Ihr Leben von zweitausendneunzehn."),
 ]
+
+# Bot-Pitch-Shift in Halbtoenen (positiv = heller/corporate).
+BOT_SEMITONES = 2.5
 
 
 def synth_vo():
     out = {}
-    for cid, start, model, length_scale, noise_w, text in VO:
+    for cid, start, character, length_scale, noise_w, text in VO:
+        raw = STEMS / f"vo_{cid}_raw.wav"
         p = STEMS / f"vo_{cid}.wav"
+        # 1) Piper synth zu raw
         cmd = [
             "python3", "-m", "piper",
-            "-m", str(model),
-            "-f", str(p),
+            "-m", str(THORSTEN),
+            "-f", str(raw),
             "--length-scale", str(length_scale),
             "--noise-w-scale", str(noise_w),
             "--sentence-silence", "0.1",
         ]
-        r = subprocess.run(cmd, input=text, text=True,
-                           capture_output=True)
+        r = subprocess.run(cmd, input=text, text=True, capture_output=True)
         if r.returncode != 0:
             print(r.stderr[-500:])
             raise RuntimeError(f"piper failed for {cid}")
+
+        # 2) Fuer Bot: Pitch hoch per asetrate, Dauer per atempo zurueck
+        if character == "bot":
+            factor = 2 ** (BOT_SEMITONES / 12.0)
+            sr_in = wav_sample_rate(raw)
+            # asetrate shiftet Pitch UND Dauer. atempo bringt Dauer zurueck.
+            fcmd = [
+                "ffmpeg", "-y", "-i", str(raw),
+                "-filter:a",
+                f"asetrate={int(sr_in * factor)},aresample={sr_in},atempo={1/factor}",
+                str(p),
+            ]
+            r = subprocess.run(fcmd, capture_output=True, text=True)
+            if r.returncode != 0:
+                print(r.stderr[-500:])
+                raise RuntimeError(f"ffmpeg pitch-shift failed for {cid}")
+            raw.unlink()
+        else:
+            raw.rename(p)
+
         d = wav_duration(p)
         out[cid] = {"start": start, "duration": d, "text": text}
-        voice_name = "Thorsten" if model == THORSTEN else "Kerstin"
-        print(f"  VO {cid:6s}  {voice_name:8s}  start={start:5.2f}  dur={d:4.2f}")
+        tag = "Thorsten+pitch" if character == "bot" else "Thorsten"
+        print(f"  VO {cid:6s}  {tag:16s}  start={start:5.2f}  dur={d:4.2f}")
     return out
+
+
+def wav_sample_rate(p: Path) -> int:
+    with wave.open(str(p), "rb") as w:
+        return w.getframerate()
 
 
 def wav_duration(p: Path) -> float:
